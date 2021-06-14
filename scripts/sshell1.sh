@@ -11,10 +11,6 @@ NEWLINE='\n'
 pattern1="cat"
 pattern2="head"
 
-patternskip1="/pash/runtime/eager.sh"
-patternskip2="/pash/runtime/auto-split.sh"
-patternskip3="source"
-
 flagCmd=0
 lasCmd=""
 
@@ -23,11 +19,6 @@ touch keyCmds.out
 
 while read line 
 do
-
-	if echo "$line" | grep -q "$patternskip1" || echo "$line" | grep -q "$patternskip2" || echo "$line" | grep -q "$patternskip3" 
-	then
-      		continue
-        fi
 
 	line=$(echo $line | sed 's/</< /g')
     	line=$(echo $line | sed 's/>/> /g')
@@ -122,61 +113,6 @@ do
 	echo index $indexOcc
 	echo array Occ : ${lastLineArrayFifos[$indexOcc]}	
 done
-
-tac outputtmp.out > routputtmp.out
-
-#echo cat reverse output
-#cat routputtmp.out
-nbOccsFifoMatch=0
-
-echo ""
-echo ""
-echo cat reverse output
-
-while read -r line
-do
-	breakLine=0
-	iterrOutput=$((iterrOutput+1))
-        echo $iterrOutput
-
-	if [ $iterrOutput -gt 3 ] && [ "$nbOccsFifoMatch" -lt "$nbOccsFifo" ]
-	then
-		echo Look for fifos to be modified
-		
-		IFS=', ' read -r -a arrayline <<< "$line"
-    		for index in "${!arrayline[@]}"
-		do
-			if  echo "${arrayline[$index]}" | grep -q "fifo"  && [ ${arrayline[$index-1]} == ">" ]
-			then
-				echo FIFO detected after redirection
-				for iterFifo in $(seq 1 $nbOccsFifos)
-				do
-		 			if [[ "${arrayline[$index]}" = "${lastLineArrayFifos[$iterFifo]}" ]]				
-					then
-						echo MATCH								
-					else
-						echo NOT MATCH	
-					fi
-				done	
-			fi	
-		done
-	else
-		routput="${routput} ${line}"
-	fi
-
-        echo $line
-    	#for index in "${!arrayline[@]}"
-	#do
-	#	if echo "${arrayline[$index]}" | grep -q "fifo"
-	#	then
-	#		arrayFifos[$nbOccFifos]=${arrayline[$index]}	
-	#		nbOccFifos=$((nbOccFifos+1))
-	#	fi
-	#done
-
-	routput="${routput} ${NEWLINE}"
-
-done < routputtmp.out
 
 while read -r line
 do
