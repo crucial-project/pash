@@ -5,6 +5,7 @@ root="/"
 
 output=""
 output2=""
+routput=""
 NEWLINE='\n'
 
 pattern1="cat"
@@ -126,6 +127,7 @@ tac outputtmp.out > routputtmp.out
 
 #echo cat reverse output
 #cat routputtmp.out
+nbOccsFifoMatch=0
 
 echo ""
 echo ""
@@ -136,33 +138,30 @@ do
 	breakLine=0
 	iterrOutput=$((iterrOutput+1))
         echo $iterrOutput
-	nbOccsFifoMatch=0
-	
-	if [ $iterrOutput -gt 3 ]
+
+	if [ $iterrOutput -gt 3 ] && [ "$nbOccsFifoMatch" -lt "$nbOccsFifo" ]
 	then
-		echo HIT HIT
+		echo Look for fifos to be modified
 		
 		IFS=', ' read -r -a arrayline <<< "$line"
     		for index in "${!arrayline[@]}"
 		do
-			if   echo "${arrayline[$index]}" | grep -q "fifo"
+			if  echo "${arrayline[$index]}" | grep -q "fifo"  && [ ${arrayline[$index-1]} == ">" ]
 			then
-				echo FIFO detected
-				if [ "${arrayline[$index-1]}" == ">" ]
-				then
-					echo FIFO detected after redirection
-					for iterFifo in $(seq 1 $nbOccsFifos)
-					do
-		 				if [[ "${arrayline[$index]}" = "${lastLineArrayFifos[$iterFifo]}" ]]				
-						then
-							echo MATCH								
-						else
-							
-						fi
-					done	
-				fi
+				echo FIFO detected after redirection
+				for iterFifo in $(seq 1 $nbOccsFifos)
+				do
+		 			if [[ "${arrayline[$index]}" = "${lastLineArrayFifos[$iterFifo]}" ]]				
+					then
+						echo MATCH								
+					else
+						echo NOT MATCH	
+					fi
+				done	
 			fi	
 		done
+	else
+		routput="${routput} ${line}"
 	fi
 
         echo $line
@@ -174,6 +173,8 @@ do
 	#		nbOccFifos=$((nbOccFifos+1))
 	#	fi
 	#done
+
+	routput="${routput} ${NEWLINE}"
 
 done < routputtmp.out
 
