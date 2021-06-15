@@ -3,6 +3,7 @@
 input=($@)
 root="/"
 
+sshcmd="ssh amaheo@b313-11"
 output=""
 output2=""
 routput=""
@@ -10,18 +11,30 @@ NEWLINE='\n'
 
 pattern1="cat"
 pattern2="head"
+pattern3="rm -f"
+pattern4="mkfifo"
+
+patternskip1="/pash/runtime/eager.sh"
+patternskip2="/pash/runtime/auto-split.sh"
+patternskip3="source"
 
 flagCmd=0
-lasCmd=""
+lastCmd=""
 
 rm -f keyCmds.out
 touch keyCmds.out
 
+# 1st step: extract commands
 while read line 
 do
 
-	line=$(echo $line | sed 's/</< /g')
-    	line=$(echo $line | sed 's/>/> /g')
+	if echo "$line" | grep -q "$patternskip1" || echo "$line" | grep -q "$patternskip2" || echo "$line" | grep -q "$patternskip3"
+	then
+      		continue
+        fi
+
+	#line=$(echo $line | sed 's/</< /g')
+    	#line=$(echo $line | sed 's/>/> /g')
 	
 	if echo "$line" | grep -q "$pattern1" || echo "$line" | grep -q "$pattern2"
 	then
@@ -82,6 +95,8 @@ do
 	arrayCmds[$itercmd]=$linecmd
 	#keyCmds[$iterKeys]=$linekey						
 done < keyCmds.out
+
+
 
 nbStages=$(cat keyCmds.out | wc -l)
 
