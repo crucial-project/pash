@@ -50,7 +50,7 @@ do
       		continue
         fi	
 
-	line=$(echo $line | sed 's/{//g')
+		line=$(echo $line | sed 's/{//g')
     	line=$(echo $line | sed 's/}//g')
     	#line=$(echo $line | sed 's/&//g')
     	line=$(echo $line | sed 's/;//g')
