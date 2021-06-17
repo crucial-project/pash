@@ -2,10 +2,17 @@
 
 input=($@)
 
-sendcmd1="nc -N -l 8080"
+PORT=8080
+IP=127.0.0.1
+pipe=$(uuid)
+HOST=$(rdv ${pipe})
+
+sendcmd1="nc -N -l ${PORT}"
 sendcmd2="rdv"
-recvcmd1="exec 3<>/dev/tcp/"
-recvcmd2="echo EOF >&3"
+sendcmd3="-1 ${IP}"
+recvcmd1="exec 3<>/dev/tcp/${HOST}/${PORT}"
+recvcmd2="&3"
+recvcmd3="echo EOF >&3"
 
 patternskip1="rm_pash_fifos"
 patternskip2="mkfifo_pash_fifos()"
@@ -32,7 +39,7 @@ do
     line=$(echo $line | sed 's/</< /g')
     line=$(echo $line | sed 's/>/> /g')
 
-
+    # Collect and store commands from the input script
     for index in "${!arrayline[@]}"
     do
 		flagCmd=1
@@ -58,3 +65,34 @@ do
     done
 
 done < $input
+
+echo keyCmds file:
+cat keyCmds.out
+echo keyCmds file uniq:
+cat keyCmds.out | uniq > keyCmdsUniq.out
+echo keyCmdsUniq.out : 
+cat keyCmdsUniq.out
+itercmd=0
+inputCmds=keyCmdsUniq.out
+arrayCmds=""
+
+while read -r linecmd
+do
+	itercmd=$((itercmd+1))
+	linecmd=$(echo $linecmd | sed "s/\"/'/g")
+	echo iter key: $itercmd
+
+	echo lineKey: $linecmd
+
+	arrayCmds[$itercmd]=$linecmd
+	#keyCmds[$iterKeys]=$linekey						
+done < keyCmdsUniq.out
+
+nbstages=$(cat keyCmdsUniq.out | wc -l)
+nbstagesmone=$((nbstages - 1))
+echo Number of stages in pipeline: $nbstages
+
+echo OUTPUT
+echo ==================
+echo -e $output > pipessshellsockets.sh 
+

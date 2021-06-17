@@ -108,6 +108,7 @@ do
 		continue
 	fi
 
+		# Collect and store commands from the input script
     	for index in "${!arrayline[@]}"
     	do
 		flagCmd=1
@@ -168,6 +169,7 @@ echo Number of stages in pipeline: $nbstages
 
 output="${output} ${NEWLINE}"
 
+# Build output script based on collected commands
 for itercmd in $(seq 1 $nbstages)
 do
 	echo arrayCmds $itercmd: ${arrayCmds[$itercmd]}
