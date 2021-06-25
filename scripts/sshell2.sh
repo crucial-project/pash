@@ -92,6 +92,45 @@ nbstages=$(cat keyCmdsUniq.out | wc -l)
 nbstagesmone=$((nbstages - 1))
 echo Number of stages in pipeline: $nbstages
 
+# Build output script based on collected commands
+for itercmd in $(seq 1 $nbstages)
+do
+ 	echo arrayCmds $itercmd: ${arrayCmds[$itercmd]}
+	if [ $itercmd == $nbstages ]
+	then	
+		fileparoutput=""
+		output="${output} ${NEWLINE}"
+		output="${output} ${NEWLINE}"
+
+		for iterpar in $(seq 1 $PAR)
+		do
+			cmd=${arrayCmds[$itercmd]}
+			output="${output} ${sshell} \"${recvcmd} "${arrayPipes[$iterpar]}" > ${root}/par_$iterpar.out\""
+			output="${output} ${NEWLINE}"
+			fileparoutput+=" ${root}/par_$iterpar.out"
+		done
+
+		output="${output} ${NEWLINE}"
+		output="${output} ${NEWLINE}"
+        output="${output} ${sshell} \"sort -m ${fileparoutput} > ${root}/res.out\""
+		output="${output} ${NEWLINE}"
+
+	else
+		cmd=${arrayCmds[$itercmd]}
+
+		for iterpar in $(seq 1 $PAR)
+		do
+			arrayPipesNext[$iterpar]="${root}/$(uuid)"
+			output="${output} ${sshell} \" ${recvcmd} ${arrayPipes[$iterpar]} | ${cmd} > ${arrayPipesNext[$iterpar]} \""
+			output="${output} ${NEWLINE}"
+			arrayPipes[$iterpar]=${arrayPipesNext[$iterpar]}
+
+		done
+		output="${output} ${NEWLINE}"
+		output="${output} ${NEWLINE}"
+	fi 
+done
+
 echo OUTPUT
 echo ==================
 echo -e $output > pipessshellsockets.sh 

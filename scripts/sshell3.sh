@@ -28,10 +28,9 @@ pattern1="cat"
 pattern2="head"
 
 sendcmd="awk '{print \\\$0}END{print \\\"EOF\\\"}'"
-#recvcmd="tail -n +0 --pid=\\$\\$ -f --retry"
-recvcmd="cat"
-#recvcmd2="2>/dev/null | { sed \\\"/EOF/ q\\\" && kill \\$\\$ ;} | grep -v ^EOF\\$"
-#recvcmd2="2>/dev/null | { sed \\\"/EOF/ q\\\" && kill \\$\\$ ;} | grep -v ^EOF\\$"
+recvcmd1="tail -n +0 --pid=\\$\\$ -f --retry"
+#recvcmd="cat"
+recvcmd2="2>/dev/null | { sed \\\"/EOF/ q\\\" && kill \\$\\$ ;} | grep -v ^EOF\\$"
 
 keyCmds=()
 keyCmdStore=""
@@ -182,7 +181,7 @@ do
 		for iterpar in $(seq 1 $PAR)
 		do
 			cmd=${arrayCmds[$itercmd]}
-			output="${output} ${sshell} \"${recvcmd} "${arrayPipes[$iterpar]}" > ${root}/par_$iterpar.out\""
+			output="${output} ${sshell} \"${recvcmd1} "${arrayPipes[$iterpar]}" \"${recvcmd2} > ${root}/par_$iterpar.out\""
 			output="${output} ${NEWLINE}"
 			fileparoutput+=" ${root}/par_$iterpar.out"
 		done
