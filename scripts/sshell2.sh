@@ -7,6 +7,8 @@ IP=127.0.0.1
 pipe=$(uuid)
 HOST=$(rdv ${pipe})
 
+rdvcmd="rdv() {echo $3 > /tmp/$1/$PID}"
+
 sendcmd1="nc -N -l ${PORT}"
 sendcmd2="rdv"
 sendcmd3="-1 ${IP}"
@@ -24,6 +26,11 @@ patternskip7="source"
 
 rm -f keyCmds.out
 touch keyCmds.out
+
+output="#!/usr/bin/env bash"
+NEWLINE='\n'
+output="${output} ${NEWLINE}"
+output+"${output} ${rdvcmd}"
 
 while read line
 do
