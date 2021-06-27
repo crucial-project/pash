@@ -4,7 +4,7 @@ PAR=2
 
 input=($@)
 #root=$(config "aws.efs.root")
-root="/mnt/efsimttsp"
+root="/tmp"
 arrayPipes=""
 arrayPipesNext=""
 
