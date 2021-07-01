@@ -28,7 +28,7 @@ pattern1="cat"
 pattern2="head"
 
 sendcmd="awk '{print \\\$0}END{print \\\"EOF\\\"}'"
-recvcmd1="tail -n +0 --pid=\\$\\$ -f --retry"
+recvcmd1="tail -n +0 --pid=\\$\\$ --retry"
 #recvcmd="cat"
 recvcmd2="2>/dev/null | { sed \\\"/EOF/ q\\\" && kill \\$\\$ ;} | grep -v ^EOF\\$"
 
@@ -37,7 +37,7 @@ keyCmdStore=""
 rm -f keyCmds.out
 touch keyCmds.out
 
-sshell="sshell"
+sshell="ssh -t b313-11"
 flagCmd=0
 dumpline=""
 nblinesfile=""
@@ -49,7 +49,7 @@ do
       		continue
         fi	
 
-		line=$(echo $line | sed 's/{//g')
+	line=$(echo $line | sed 's/{//g')
     	line=$(echo $line | sed 's/}//g')
     	#line=$(echo $line | sed 's/&//g')
     	line=$(echo $line | sed 's/;//g')
@@ -197,7 +197,7 @@ do
 		for iterpar in $(seq 1 $PAR)
 		do
 			arrayPipesNext[$iterpar]="${root}/$(uuid)"
-			output="${output} ${sshell} \" ${recvcmd} ${arrayPipes[$iterpar]} | ${cmd} > ${arrayPipesNext[$iterpar]} \""
+			output="${output} ${sshell} \" ${recvcmd1} ${arrayPipes[$iterpar]} ${recvcmd2} | ${cmd} > ${arrayPipesNext[$iterpar]} \""
 			output="${output} ${NEWLINE}"
 			arrayPipes[$iterpar]=${arrayPipesNext[$iterpar]}
 

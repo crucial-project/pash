@@ -3,7 +3,7 @@
 input=($@)
 root="/"
 
-sshcmd="ssh amaheo@b313-11"
+sshcmd="ssh -t b313-11"
 output=""
 output2=""
 routput=""
@@ -11,7 +11,7 @@ NEWLINE='\n'
 
 pattern1="cat"
 pattern2="head"
-pattern3="rm -f"
+pattern3="rm"
 pattern4="mkfifo"
 
 patternskip1="/pash/runtime/eager.sh"
@@ -28,10 +28,10 @@ touch keyCmds.out
 while read line 
 do
 
-	if echo "$line" | grep -q "$patternskip1" || echo "$line" | grep -q "$patternskip2" || echo "$line" | grep -q "$patternskip3"
-	then
-      		continue
-        fi
+	#if echo "$line" | grep -q "$patternskip1" || echo "$line" | grep -q "$patternskip2" || echo "$line" | grep -q "$patternskip3"
+	#then
+      	#	continue
+        #fi
 
 	#line=$(echo $line | sed 's/</< /g')
     	#line=$(echo $line | sed 's/>/> /g')
@@ -79,6 +79,10 @@ done < $input
 echo -e $output > outputtmp.out
 echo  last line: $lastCmdLine
 
+echo OUTPUT 1
+echo -e $output
+echo ==================================
+
 cat keyCmds.out
 
 arrayCmds=""
@@ -95,8 +99,6 @@ do
 	arrayCmds[$itercmd]=$linecmd
 	#keyCmds[$iterKeys]=$linekey						
 done < keyCmds.out
-
-
 
 nbStages=$(cat keyCmds.out | wc -l)
 
@@ -136,16 +138,40 @@ do
 
 	if echo "${arrayline[1]}" | grep -q "${arrayCmds[nbStages-1]}"
 	then
-		echo HIT	
+		echo KEY HIT	
 	fi
-
-        #for index in "${!arrayline[@]}"
-	#do
-	#	echo "FOR"
-	#done
 
 done < routputtmp.out
 
-echo OUTPUT
+# prefix lines with sshell / ssh
+while read line
+do
+	IFS=', ' read -r -a arrayline <<< "$line"
+
+	if echo "$line" | grep -wq "$pattern1" || echo "$line" | grep -wq "$pattern2" || echo "$line" | grep -wq "$pattern3" || echo "$line" | grep -wq "$pattern4"
+	then
+		for index in "${!arrayline[@]}"
+		do
+			if echo "${arrayline[$index]}" | grep -wq  "$pattern1" || echo "${arrayline[$index]}" | grep -wq "$pattern2" || echo "${arrayline[$index]}" | grep -wq "$pattern3" || echo "${arrayline[$index]}" | grep -wq "$pattern4" 
+			then
+				echo PATTERN HIT : ${arrayline[$index]}
+				output2="${output2} ${sshcmd} ${arrayline[$index]}" 
+			else
+				echo MISS
+				output2="${output2} ${arrayline[$index]}" 
+			fi	
+		done
+	else
+		for index in "${!arrayline[@]}"
+		do
+			output2="${output2} ${arrayline[$index]}" 
+		done
+	fi
+
+	output2="${output2} ${NEWLINE}"
+ 
+done < $input
+
+echo OUTPUT 2
 echo ==================
-echo -e $output  
+echo -e $output2  
