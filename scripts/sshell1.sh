@@ -29,33 +29,26 @@ matchCmd()
   	strl=$1
 	arrayCmd=$2
   
-	IFS=', ' read -r -a arrayline <<< "$strl"
+	#IFS=', ' read -r -a arraylinecmd <<< "$strl"
 
-        for index in "${!arrayline[@]}"
+	for indexCmd in ${!arrayCmd[@]}
 	do
-		for indexCmd in ${!arrayCmd[@]}
-		do
-			if echo "${arrayline[$index]}" | grep -q "${arrayCmd[$indexCmd]}"
-			then
-				flagCmd="true"
-			fi
-		done
+		if echo "$strl" | grep -q "${arrayCmd[$indexCmd]}"
+		then
+			flagCmd="true"
+		fi
 	done
 }
 
 matchPattern()
 {
-
 	strl=$1 
 
 	if  echo "$line" | grep -wq "$pattern1"  ||  echo "$line" | grep -wq "$pattern2"  ||  echo "$line" | grep -wq "$pattern3"  ||  echo "$line" | grep -wq "$pattern4"  
 	then
-		echo PATTERN TRUE
 		flagPattern="true"
 	fi
-  
 }
-
 
 rm -f keyCmds.out
 touch keyCmds.out
@@ -194,9 +187,10 @@ do
 	IFS=', ' read -r -a arrayline <<< "$line"
 
 	matchCmd $line ${arrayCmdFirst}
-	matchPattern $line
+	#matchPattern $line
 
-	if  echo "$flagCmd" | grep -q "true"  ||  echo "$flagPattern" | grep -q "true"  
+	#if  echo "$flagPattern" | grep -q "true"  
+	if  echo "$line" | grep -wq "$pattern1"  ||  echo "$line" | grep -wq "$pattern2"  ||  echo "$line" | grep -wq "$pattern3"  ||  echo "$line" | grep -wq "$pattern4" || echo "$flagCmd" | grep -wq "true" 
 	then
 		echo LINE TRUE
 		for index in "${!arrayline[@]}"
@@ -204,15 +198,16 @@ do
 			flagCmd="false"
 			flagPattern="false"
 	
-			matchCmd ${arrayline[$index]} ${arrayCmdFirst}
-			matchPattern ${arrayline[$index]}
+			#matchCmd ${arrayline[$index]} ${arrayCmdFirst}
+			#matchPattern ${arrayline[$index]}
 
-			if echo "$flagCmd" | grep -q "true" || echo "$flagPattern" | grep -q "true" 
+			#if echo "$flagPattern" | grep -q "true" 
+			if  echo "${arrayline[$index]}" | grep -wq "$pattern1"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern2"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern3"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern4" || echo "$flagCmd" | grep -wq "true" 
 			then
 				#echo PATTERN HIT : ${arrayline[$index]}
 				output2="${output2} ${sshcmd} ${arrayline[$index]}" 
 			else
-				#echo MISS
+				echo MISS
 				output2="${output2} ${arrayline[$index]}" 
 			fi	
 		done
