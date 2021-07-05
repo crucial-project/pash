@@ -3,7 +3,7 @@
 input=($@)
 root="/"
 
-sshcmd="ssh -t b313-11"
+sshcmd="ssh -t b313-11 '"
 output=""
 output2=""
 routput=""
@@ -21,6 +21,7 @@ patternskip3="source"
 flagCmd="false"
 flagPattern="false"
 flagMatch=false
+flagSSH="false"
 lastCmd=""
 arrayCmdFirst=""
 
@@ -193,6 +194,14 @@ while read line
 do
 	flagCmd="false"
 	flagPattern="false"
+	flagSSH="false"
+
+	line=$(echo $line | sed "s/mkfifo \"/mkfifo /g")
+	line=$(echo $line | sed "s/rm -f \"/rm -f /g")
+	line=$(echo $line | sed "s/\" ;/ ;/g")
+	line=$(echo $line | sed "s/\" &/ &/g")
+	line=$(echo $line | sed "s/<\"/< /g")
+	line=$(echo $line | sed "s/>\"/> /g")
 
 	IFS=', ' read -r -a arrayline <<< "$line"
 
@@ -216,10 +225,24 @@ do
 			then
 				#echo PATTERN HIT : ${arrayline[$index]}
 				output2="${output2} ${sshcmd} ${arrayline[$index]}" 
+				flagSSH="true"
+
+				if echo "${arrayline[$index]}" | grep '}' || echo "${arrayline[$index]}" | grep '&'
+				then
+					output2="${output2} AHAH ${arrayline[$index]}"
+				fi
+
 			else
 				echo MISS
 				output2="${output2} ${arrayline[$index]}" 
-			fi	
+			fi
+
+			if echo "${arrayline[$index]}" | grep '}' || echo "${arrayline[$index]}" | grep '&' || echo "$flagSSH" | grep 'true'
+			then
+				output2="${output2} AHAH ${arrayline[$index]}"
+				flagSSH="false"
+			fi
+
 		done
 	else
 		for index in "${!arrayline[@]}"
@@ -234,4 +257,4 @@ done < $input
 
 echo OUTPUT 2
 echo ==================
-echo -e $output2 > /tmp/pash_sshell1.sh 
+echo -e $output2 
