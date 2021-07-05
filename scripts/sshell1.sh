@@ -22,22 +22,31 @@ flagCmd="false"
 flagPattern="false"
 flagMatch=false
 lastCmd=""
+arrayCmdFirst=""
 
 # Check if given string matches any command
 matchCmd()
 {
-  	strl=$1
-	arrayCmd=$2
-  
+  	strl="$@"
+	#arrayCmd="$2"
+ 
+	echo matchCMD - line arg: "$@"
+        echo matchCMD - line: $strl	
 	#IFS=', ' read -r -a arraylinecmd <<< "$strl"
 
-	for indexCmd in ${!arrayCmd[@]}
+	for indexCmd in ${!arrayCmdFirst[@]}
 	do
-		if echo "$strl" | grep -q "${arrayCmd[$indexCmd]}"
+		echo ARRAY CMD ITEM: ${arrayCmdFirst[$indexCmd]}
+		if echo "$strl" | grep -q "${arrayCmdFirst[$indexCmd]}"
 		then
+			echo SET FLAG CMD TO TRUE
 			flagCmd="true"
+			return 0
 		fi
 	done
+
+	echo SET FLAG CMD TO FALSE
+	flagCmd="false"
 }
 
 matchPattern()
@@ -118,21 +127,22 @@ echo ""
 echo ""
 arrayCmds=""
 nbStages=""
+itercmd=0
 
 while read -r linecmd
 do
-	#itercmd=$((itercmd+1))
 	linecmd=$(echo $linecmd | sed "s/\"/'/g")
 
 	IFS=', ' read -r -a arraylinecmd <<< "$linecmd"
 
 	echo iter key: $itercmd
-
 	echo lineKey: $linecmd
 
 	arrayCmds[$itercmd]=$linecmd
 	arrayCmdFirst[$itercmd]=${arraylinecmd[0]}
+	echo Cmd First: ${arrayCmdFirst[$itercmd]}
 	#keyCmds[$iterKeys]=$linekey						
+	itercmd=$((itercmd+1))
 done < keyCmds.out
 
 nbStages=$(cat keyCmds.out | wc -l)
@@ -186,11 +196,11 @@ do
 
 	IFS=', ' read -r -a arrayline <<< "$line"
 
-	matchCmd $line ${arrayCmdFirst}
+	matchCmd $line 
 	#matchPattern $line
 
 	#if  echo "$flagPattern" | grep -q "true"  
-	if  echo "$line" | grep -wq "$pattern1"  ||  echo "$line" | grep -wq "$pattern2"  ||  echo "$line" | grep -wq "$pattern3"  ||  echo "$line" | grep -wq "$pattern4" || echo "$flagCmd" | grep -wq "true" 
+	if  echo "$line" | grep -wq "$pattern1"  ||  echo "$line" | grep -wq "$pattern2"  ||  echo "$line" | grep -wq "$pattern3"  ||  echo "$line" | grep -wq "$pattern4" || echo "$line" | grep -wq "$patternskip1" || echo "$line" | grep -wq "$patternskip2" || echo "$flagCmd" | grep 'true' 
 	then
 		echo LINE TRUE
 		for index in "${!arrayline[@]}"
@@ -198,11 +208,11 @@ do
 			flagCmd="false"
 			flagPattern="false"
 	
-			#matchCmd ${arrayline[$index]} ${arrayCmdFirst}
+			matchCmd ${arrayline[$index]} 
 			#matchPattern ${arrayline[$index]}
-
+			echo flagCmd: $flagCmd
 			#if echo "$flagPattern" | grep -q "true" 
-			if  echo "${arrayline[$index]}" | grep -wq "$pattern1"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern2"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern3"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern4" || echo "$flagCmd" | grep -wq "true" 
+			if  echo "${arrayline[$index]}" | grep -wq "$pattern1"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern2"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern3"  ||  echo "${arrayline[$index]}" | grep -wq "$pattern4" || echo "${arrayline[$index]}" | grep -wq "$patternskip1" || echo "${arrayline[$index]}" | grep -wq "$patternskip2" || echo "${arrayline[$index]}" | grep -wq "$patternskip3" || echo "$flagCmd" | grep 'true' 
 			then
 				#echo PATTERN HIT : ${arrayline[$index]}
 				output2="${output2} ${sshcmd} ${arrayline[$index]}" 
@@ -224,4 +234,4 @@ done < $input
 
 echo OUTPUT 2
 echo ==================
-echo -e $output2  
+echo -e $output2 > /tmp/pash_sshell1.sh 
