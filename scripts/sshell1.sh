@@ -22,6 +22,8 @@ flagCmd="false"
 flagPattern="false"
 flagMatch=false
 flagSSH="false"
+flagSSHEnd="true"
+condSSHEnd="false"
 lastCmd=""
 arrayCmdFirst=""
 
@@ -212,6 +214,8 @@ do
 	if  echo "$line" | grep -wq "$pattern1"  ||  echo "$line" | grep -wq "$pattern2"  ||  echo "$line" | grep -wq "$pattern3"  ||  echo "$line" | grep -wq "$pattern4" || echo "$line" | grep -wq "$patternskip1" || echo "$line" | grep -wq "$patternskip2" || echo "$flagCmd" | grep 'true' 
 	then
 		echo LINE TRUE
+		flagSSHEnd="true"
+
 		for index in "${!arrayline[@]}"
 		do
 			flagCmd="false"
@@ -227,20 +231,26 @@ do
 				output2="${output2} ${sshcmd} ${arrayline[$index]}" 
 				flagSSH="true"
 
-				if echo "${arrayline[$index]}" | grep '}' || echo "${arrayline[$index]}" | grep '&'
-				then
-					output2="${output2} AHAH ${arrayline[$index]}"
-				fi
+				#if echo "${arrayline[$index]}" | grep '}' || echo "${arrayline[$index]}" | grep '&'
+				#then
+				#	output2="${output2} AHAH ${arrayline[$index]}"
+				#fi
 
 			else
 				echo MISS
 				output2="${output2} ${arrayline[$index]}" 
 			fi
 
-			if echo "${arrayline[$index]}" | grep '}' || echo "${arrayline[$index]}" | grep '&' || echo "$flagSSH" | grep 'true'
+			if echo "${arrayline[$index]}" | grep '}' || echo "${arrayline[$index]}" | grep '&'
+			then
+				condSSHEnd="true"
+			fi
+
+			if echo "$condSSHEnd" | grep 'true' && echo "$flagSSH" | grep 'true' && echo "$flagSSHEnd" | grep 'true'
 			then
 				output2="${output2} AHAH ${arrayline[$index]}"
-				flagSSH="false"
+				flagSSHEnd="false"
+				#break
 			fi
 
 		done
