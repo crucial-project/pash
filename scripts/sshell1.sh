@@ -5,9 +5,12 @@ root="/"
 
 sshcmd="ssh -t b313-11 '"
 output=""
-output2=""
+output2="#!/usr/bin/env bash"
 routput=""
 NEWLINE='\n'
+
+output2="${output2} ${NEWLINE}"
+output2="${output2} ${NEWLINE}"
 
 pattern1="cat"
 pattern2="head"
@@ -198,12 +201,12 @@ do
 	flagPattern="false"
 	flagSSH="false"
 
-	line=$(echo $line | sed "s/mkfifo \"/mkfifo /g")
-	line=$(echo $line | sed "s/rm -f \"/rm -f /g")
-	line=$(echo $line | sed "s/\" ;/ ;/g")
-	line=$(echo $line | sed "s/\" &/ &/g")
-	line=$(echo $line | sed "s/<\"/< /g")
-	line=$(echo $line | sed "s/>\"/> /g")
+	#line=$(echo $line | sed "s/mkfifo \"/mkfifo /g")
+	#line=$(echo $line | sed "s/rm -f \"/rm -f /g")
+	#line=$(echo $line | sed "s/\" ;/ ;/g")
+	#line=$(echo $line | sed "s/\" &/ &/g")
+	#line=$(echo $line | sed "s/<\"/< /g")
+	#line=$(echo $line | sed "s/>\"/> /g")
 
 	IFS=', ' read -r -a arrayline <<< "$line"
 
@@ -229,6 +232,7 @@ do
 			then
 				#echo PATTERN HIT : ${arrayline[$index]}
 				output2="${output2} ${sshcmd} ${arrayline[$index]}" 
+				#output2="${output2} ${arrayline[$index]}" 
 				flagSSH="true"
 
 				#if echo "${arrayline[$index]}" | grep '}' || echo "${arrayline[$index]}" | grep '&'
@@ -248,7 +252,7 @@ do
 
 			if echo "$condSSHEnd" | grep 'true' && echo "$flagSSH" | grep 'true' && echo "$flagSSHEnd" | grep 'true'
 			then
-				output2="${output2} AHAH ${arrayline[$index]}"
+				#output2="${output2} AHAH ${arrayline[$index]}"
 				flagSSHEnd="false"
 				#break
 			fi
@@ -267,4 +271,4 @@ done < $input
 
 echo OUTPUT 2
 echo ==================
-echo -e $output2 
+echo -e $output2 > /tmp/sshell1_pash_unix50_2.sh 
