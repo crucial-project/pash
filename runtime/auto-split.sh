@@ -6,7 +6,7 @@ outputs="$@"
 n_outputs="$#"
 
 # Set a default DISH_TOP in this directory if it doesn't exist
-PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
+#PASH_TOP=${PASH_TOP:-$(git rev-parse --show-toplevel)}
 
 temp="$(mktemp --tmpdir -u pash_XXXXXXXXXX)"
 
@@ -27,7 +27,8 @@ trap cleanup EXIT
 
 
 # echo "$PASH_TOP/evaluation/tools/split $input $batch_size $outputs"
-$PASH_TOP/runtime/split "$temp" "$batch_size" $outputs &
+#$PASH_TOP/runtime/split "$temp" "$batch_size" $outputs &
+/home/aurele/git/pash/runtime/split "$temp" "$batch_size" $outputs &
 split_pid=$!
 wait $split_pid
 rm -f $temp
