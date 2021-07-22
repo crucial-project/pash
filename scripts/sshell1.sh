@@ -29,12 +29,10 @@ do
 	RANDOM=$(date +%s%N)
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
-	line=$(echo "$line" | sed -r "s/[{]/{ssh -tt amaheo@$sshmachine '/g")
+	line=$(echo "$line" | sed -r "s/^[{]/{ssh -tt amaheo@$sshmachine '/g")
         echo $line | sed -r "s/&/' &/g"	
 
 done < tempPASH2.txt > outfile
-
-#sed -i "s/\${ssh -tt amaheo@$sshmachine '!}/\${!}/g" outfile
 
 #sed -i "s/{ /{ ssh -tt amaheo@$RANDOM '/g" tempPASH2.txt 
 #sed -i "s/{ /{ ssh -tt amaheo@${arrssh[$$$(date +%s%N) % ${#arrssh[@]}]} '/g" tempPASH2.txt 
