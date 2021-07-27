@@ -12,21 +12,37 @@ done < configssh.txt
 echo ARRAY SSH MACHINES
 lenArraySSH=${#arrssh[@]}
 
-RANDOM=$$$(date +%s)
+#$RANDOM=$$$(date +%s)
 
-sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+#sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
-echo Random machine : $sshmachine
+#echo Random machine : $sshmachine
 
 echo $lenArraySSH
 
 csplit -z -f 'tempPASH' -b '%0d.txt' $input /mkfifo_pash_fifos/ {*}
 
-sed -i "s/{ /{ ssh -tt $sshmachine '/g" tempPASH2.txt 
+#rndm=($(shuf -e {00..12}))
 
-sed -i "s/&/' &/g" tempPASH2.txt 
+while read line
+do
+	RANDOM=$(date +%s%N)
+	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+
+	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine '/g")
+	echo $line
+        #echo $line | sed -r "s/&/' &/g"	
+
+done < tempPASH2.txt > outfile
+
+#sed -i "s/{ /{ ssh -tt amaheo@$RANDOM '/g" tempPASH2.txt 
+#sed -i "s/{ /{ ssh -tt amaheo@${arrssh[$$$(date +%s%N) % ${#arrssh[@]}]} '/g" tempPASH2.txt 
+
+sed -i "s/&/' &/g" outfile
 
 cat tempPASH0.txt > ssh_pash.sh
 cat tempPASH1.txt >> ssh_pash.sh
-cat tempPASH2.txt >> ssh_pash.sh
+cat outfile >> ssh_pash.sh
+#cat tempPASH2.txt >> ssh_pash.sh
 
+sed -i "s/\/tmp/\/netfs\/inf\/amaheo\/tmp/g" ssh_pash.sh

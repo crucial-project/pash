@@ -27,8 +27,8 @@ trap cleanup EXIT
 
 
 # echo "$PASH_TOP/evaluation/tools/split $input $batch_size $outputs"
-#$PASH_TOP/runtime/split "$temp" "$batch_size" $outputs &
-/home/aurele/git/pash/runtime/split "$temp" "$batch_size" $outputs &
+$PASH_TOP/runtime/split "$temp" "$batch_size" $outputs &
+#/home/aurele/git/pash/runtime/split "$temp" "$batch_size" $outputs &
 split_pid=$!
 wait $split_pid
 rm -f $temp
