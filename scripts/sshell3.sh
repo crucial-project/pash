@@ -30,14 +30,14 @@ pattern2="head"
 sendcmd="awk '{print \\\$0}END{print \\\"EOF\\\"}'"
 recvcmd1="tail -n +0 --pid=\\$\\$ --retry"
 #recvcmd="cat"
-recvcmd2="2>/dev/null | { sed \\\"/EOF/ q\\\" && kill \\$\\$ ;} | grep -v ^EOF\\$"
+recvcmd2="2>/dev/null | grep -v ^EOF\\$"
 
 keyCmds=()
 keyCmdStore=""
 rm -f keyCmds.out
 touch keyCmds.out
 
-sshell="ssh -t b313-11"
+executor="ssh -t b313-11"
 flagCmd=0
 dumpline=""
 nblinesfile=""
@@ -72,12 +72,12 @@ do
 			if [ "$iterpar" == 1 ] 
 			then
 				#echo head
-				output="${output} ${sshell} \"head -n $cknblinesfile ${root}${arrayline[1]} > ${arrayPipes[$iterpar]} \""
+				output="${output} ${executor} \"head -n $cknblinesfile ${root}${arrayline[1]} > ${arrayPipes[$iterpar]} \""
 				output="${output} ${NEWLINE}"
 			else
 				offset=$(($iterpar * $cknblinesfile))
 				#echo tail
-				output="${output} ${sshell} \"head -n $offset ${root}${arrayline[1]} | tail -n +${cknblinesfile} > ${arrayPipes[$iterpar]} \"" 
+				output="${output} ${executor} \"head -n $offset ${root}${arrayline[1]} | tail -n +${cknblinesfile} > ${arrayPipes[$iterpar]} \"" 
 				output="${output} ${NEWLINE}"
 			fi
 		done
@@ -95,19 +95,19 @@ do
 			if [ "$iterpar" == 1 ] 
 			then
 				#echo head
-				output="${output} ${sshell} \"head -n $cknblinesfile ${root}/${arrayline[3]} > ${arrayPipes[$iterpar]} \""
+				output="${output} ${executor} \"head -n $cknblinesfile ${root}/${arrayline[3]} > ${arrayPipes[$iterpar]} \""
 				output="${output} ${NEWLINE}"
 			else
 				offset=$(($iterpar * $cknblinesfile))
 				#echo tail
-				output="${output} ${sshell} \"head -n $offset ${root}/${arrayline[3]} | tail -n +${cknblinesfile} > ${arrayPipes[$iterpar]} \"" 
+				output="${output} ${executor} \"head -n $offset ${root}/${arrayline[3]} | tail -n +${cknblinesfile} > ${arrayPipes[$iterpar]} \"" 
 				output="${output} ${NEWLINE}"
 			fi
 		done
 		continue
 	fi
 
-		# Collect and store commands from the input script
+	# Collect and store commands from the input script
     	for index in "${!arrayline[@]}"
     	do
 		flagCmd=1
@@ -120,6 +120,11 @@ do
 			cmd=""
 			while [[ ${arrayline[$itercmd]} != "<" && ${arrayline[$itercmd]} != *"/tmp"* ]]
 			do
+				if echo ${arrayline[$itercmd]} | grep "}"
+				then
+ 					break
+				fi
+				echo ${arrayline[$itercmd]}
 				cmd="$cmd ${arrayline[$itercmd]}"
 				itercmd=$((itercmd+1))
 				echo itercmd: $itercmd
@@ -130,7 +135,6 @@ do
 			keyCmdStore+="${arrayline[index+1]}"
 			keyCmdStore+=" "
 		fi
-
 	done
 
 done < $input
@@ -181,14 +185,14 @@ do
 		for iterpar in $(seq 1 $PAR)
 		do
 			cmd=${arrayCmds[$itercmd]}
-			output="${output} ${sshell} \"${recvcmd1} "${arrayPipes[$iterpar]}" \"${recvcmd2} > ${root}/par_$iterpar.out\""
+			output="${output} ${executor} \"${recvcmd1} "${arrayPipes[$iterpar]}" \"${recvcmd2} > ${root}/par_$iterpar.out\""
 			output="${output} ${NEWLINE}"
 			fileparoutput+=" ${root}/par_$iterpar.out"
 		done
 
 		output="${output} ${NEWLINE}"
 		output="${output} ${NEWLINE}"
-                output="${output} ${sshell} \"sort -m ${fileparoutput} > ${root}/res.out\""
+                output="${output} ${executor} \"sort -m ${fileparoutput} > ${root}/res.out\""
 		output="${output} ${NEWLINE}"
 
 	else
@@ -197,7 +201,7 @@ do
 		for iterpar in $(seq 1 $PAR)
 		do
 			arrayPipesNext[$iterpar]="${root}/$(uuid)"
-			output="${output} ${sshell} \" ${recvcmd1} ${arrayPipes[$iterpar]} ${recvcmd2} | ${cmd} > ${arrayPipesNext[$iterpar]} \""
+			output="${output} ${executor} \" ${recvcmd1} ${arrayPipes[$iterpar]} ${recvcmd2} | ${cmd} > ${arrayPipesNext[$iterpar]} \""
 			output="${output} ${NEWLINE}"
 			arrayPipes[$iterpar]=${arrayPipesNext[$iterpar]}
 
