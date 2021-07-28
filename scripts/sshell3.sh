@@ -4,7 +4,7 @@ PAR=2
 
 input=($@)
 #root=$(config "aws.efs.root")
-root="/tmp"
+root="/netfs/inf/amaheo/tmp"
 arrayPipes=""
 arrayPipesNext=""
 
@@ -30,14 +30,19 @@ pattern2="head"
 sendcmd="awk '{print \\\$0}END{print \\\"EOF\\\"}'"
 recvcmd1="tail -n +0 --pid=\\$\\$ --retry"
 #recvcmd="cat"
-recvcmd2="2>/dev/null | grep -v ^EOF\\$"
+recvcmd2="2>/dev/null | { sed \"/EOF/ q\" && kill \$\$ ;} | grep -v ^EOF\\$"
+
+arrssh=()
+while IFS= read -r line; do
+  arrssh+=("$line")
+done < configssh.txt
 
 keyCmds=()
 keyCmdStore=""
 rm -f keyCmds.out
 touch keyCmds.out
 
-executor="ssh -t b313-11"
+#executor="ssh -t b313-11"
 flagCmd=0
 dumpline=""
 nblinesfile=""
@@ -67,17 +72,23 @@ do
 		
 		for iterpar in $(seq 1 $PAR) 
 		do
-			arrayPipes[$iterpar]="${root}/$(uuid)"
+			arrayPipes[$iterpar]="${root}/$(date +%s%N)"
 			#echo iter2: $iter
 			if [ "$iterpar" == 1 ] 
 			then
 				#echo head
-				output="${output} ${executor} \"head -n $cknblinesfile ${root}${arrayline[1]} > ${arrayPipes[$iterpar]} \""
+				RANDOM=$(date +%s%N)
+				sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+				executor="ssh -t $sshmachine"
+				output="${output} ${executor} \"head -n $cknblinesfile ${arrayline[1]} > ${arrayPipes[$iterpar]} \""
 				output="${output} ${NEWLINE}"
 			else
 				offset=$(($iterpar * $cknblinesfile))
 				#echo tail
-				output="${output} ${executor} \"head -n $offset ${root}${arrayline[1]} | tail -n +${cknblinesfile} > ${arrayPipes[$iterpar]} \"" 
+				RANDOM=$(date +%s%N)
+				sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+				executor="ssh -t $sshmachine"
+				output="${output} ${executor} \"head -n $offset ${arrayline[1]} | tail -n +${cknblinesfile} > ${arrayPipes[$iterpar]} \"" 
 				output="${output} ${NEWLINE}"
 			fi
 		done
@@ -90,16 +101,22 @@ do
 
 		for iterpar in $(seq 1 $PAR) 
 		do
-			arrayPipes[$iterpar]="${root}/$(uuid)"
+			arrayPipes[$iterpar]="${root}/$(date +%s%N)"
 			#echo iter2: $iter
 			if [ "$iterpar" == 1 ] 
 			then
 				#echo head
+				RANDOM=$(date +%s%N)
+				sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+				executor="ssh -t $sshmachine"
 				output="${output} ${executor} \"head -n $cknblinesfile ${root}/${arrayline[3]} > ${arrayPipes[$iterpar]} \""
 				output="${output} ${NEWLINE}"
 			else
 				offset=$(($iterpar * $cknblinesfile))
 				#echo tail
+				RANDOM=$(date +%s%N)
+				sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+				executor="ssh -t $sshmachine"
 				output="${output} ${executor} \"head -n $offset ${root}/${arrayline[3]} | tail -n +${cknblinesfile} > ${arrayPipes[$iterpar]} \"" 
 				output="${output} ${NEWLINE}"
 			fi
@@ -185,6 +202,9 @@ do
 		for iterpar in $(seq 1 $PAR)
 		do
 			cmd=${arrayCmds[$itercmd]}
+			RANDOM=$(date +%s%N)
+			sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+			executor="ssh -t $sshmachine"
 			output="${output} ${executor} \"${recvcmd1} "${arrayPipes[$iterpar]}" \"${recvcmd2} > ${root}/par_$iterpar.out\""
 			output="${output} ${NEWLINE}"
 			fileparoutput+=" ${root}/par_$iterpar.out"
@@ -192,6 +212,9 @@ do
 
 		output="${output} ${NEWLINE}"
 		output="${output} ${NEWLINE}"
+		RANDOM=$(date +%s%N)
+		sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+		executor="ssh -t $sshmachine"
                 output="${output} ${executor} \"sort -m ${fileparoutput} > ${root}/res.out\""
 		output="${output} ${NEWLINE}"
 
@@ -200,7 +223,10 @@ do
 
 		for iterpar in $(seq 1 $PAR)
 		do
-			arrayPipesNext[$iterpar]="${root}/$(uuid)"
+			arrayPipesNext[$iterpar]="${root}/$(date +%s%N)"
+			RANDOM=$(date +%s%N)
+			sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+			executor="ssh -t $sshmachine"
 			output="${output} ${executor} \" ${recvcmd1} ${arrayPipes[$iterpar]} ${recvcmd2} | ${cmd} > ${arrayPipesNext[$iterpar]} \""
 			output="${output} ${NEWLINE}"
 			arrayPipes[$iterpar]=${arrayPipesNext[$iterpar]}

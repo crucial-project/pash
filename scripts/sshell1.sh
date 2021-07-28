@@ -40,9 +40,9 @@ done < tempPASH2.txt > outfile
 
 sed -i "s/&/' &/g" outfile
 
-cat tempPASH0.txt > ssh_pash.sh
-cat tempPASH1.txt >> ssh_pash.sh
-cat outfile >> ssh_pash.sh
+cat tempPASH0.txt > pash_ssh.sh
+cat tempPASH1.txt >> pash_ssh.sh
+cat outfile >> pash_ssh.sh
 #cat tempPASH2.txt >> ssh_pash.sh
 
-sed -i "s/\/tmp/\/netfs\/inf\/amaheo\/tmp/g" ssh_pash.sh
+sed -i "s/\/tmp/\/netfs\/inf\/amaheo\/tmp/g" pash_ssh.sh
