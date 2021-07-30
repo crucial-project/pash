@@ -22,25 +22,6 @@ output="${output} ${NEWLINE}"
 
 skippattern="/pash/runtime/eager.sh"
 
-#while read line
-#do
-	#if echo "$line" | grep -q "$skippattern"
-	#then
-	#	continue
-	#fi
-
-	#output1="${output1} ${line}"
-	#output1="${output1} ${NEWLINE}"
-
-#done < $input 
-
-#echo -e $output1 > pipesshellfs_tmp.out
-
-#sed -i "s/</< /g" pipesshellfs_tmp.out
-#sed -i "s/>/> /g" pipesshellfs_tmp.out
-
-#sed -i "s/<\"/touch/g" pipessshellfs_${PAR}_chunks.sh
-
 while read line
 do
 	line=$(echo $line | sed 's/\<mkfifo\>/touch/g')
