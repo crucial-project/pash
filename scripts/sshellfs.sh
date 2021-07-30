@@ -10,6 +10,13 @@ if [ $# -eq 0 ]
     exit
 fi
 
+arrssh=()
+while IFS= read -r line; do
+  arrssh+=("$line")
+done < configssh.txt
+
+#root="/netfs/inf/amaheo/tmp"
+root="netfs\/inf\/amaheo\/tmp"
 NEWLINE='\n'
 
 sendcmd="awk '{print \\\$0}END{print \\\"EOF\\\"}'"
@@ -24,6 +31,8 @@ skippattern="/pash/runtime/eager.sh"
 
 while read line
 do
+
+	#line=$(echo $line | sed "s/\/tmp/$root\/tmp/g")
 	line=$(echo $line | sed 's/\<mkfifo\>/touch/g')
 	line=$(echo $line | sed 's/</< /g')
 	line=$(echo $line | sed 's/>/> /g')
@@ -57,5 +66,29 @@ done < $input
 
 echo OUTPUT
 echo ==================
-echo -e $output > pipessshellfs_chunks.sh 
+echo -e $output > tmpsshellout
 
+sed -i "s/tmp/${root}/g" tmpsshellout
+
+tmpsshell=$(cat tmpsshellout)
+
+csplit -z -f 'tempPASH' -b '%0d.txt' tmpsshellout /mkfifo_pash_fifos/ {*}
+
+#rndm=($(shuf -e {00..12}))
+
+while read line
+do
+	RANDOM=$(date +%s%N)
+	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+
+	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine '/g")
+	echo $line
+        #echo $line | sed -r "s/&/' &/g"	
+
+done < tempPASH2.txt > outfile
+
+sed -i "s/&/' &/g" outfile
+
+cat tempPASH0.txt > pipessshellfs.sh
+cat tempPASH1.txt >> pipessshellfs.sh
+cat outfile >> pipessshellfs.sh
