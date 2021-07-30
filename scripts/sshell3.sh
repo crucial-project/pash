@@ -12,7 +12,6 @@ output="#!/usr/bin/env bash"
 NEWLINE='\n'
 output="${output} ${NEWLINE}"
 output="${output} ${NEWLINE}"
-output="${output} ${NEWLINE}"
 
 patternskip1="rm_pash_fifos"
 patternskip2="mkfifo_pash_fifos()"
@@ -30,7 +29,7 @@ pattern2="head"
 sendcmd="awk '{print \\\$0}END{print \\\"EOF\\\"}'"
 recvcmd1="tail -n +0 --pid=\\$\\$ --retry"
 #recvcmd="cat"
-recvcmd2="2>/dev/null | { sed \"/EOF/ q\" && kill \$\$ ;} | grep -v ^EOF\\$"
+recvcmd2="2>/dev/null | { sed '/EOF/ q' && kill \$\$ ;} | grep -v ^EOF\\$"
 
 arrssh=()
 while IFS= read -r line; do
