@@ -21,7 +21,7 @@ NEWLINE='\n'
 
 sendcmd="awk '{print \\\$0}END{print \\\"EOF\\\"}'"
 recvcmd1="tail -n +0 --pid=\\$\\$ --retry"
-recvcmd2="2>/dev/null | { sed '/EOF/ q' && kill \$\$ ;} | grep -v ^EOF\\$"
+recvcmd2="2>/dev/null | { sed '/EOF/ q' && kill \\$\\$ ;} | grep -v ^EOF\\$"
 
 output="#!/usr/bin/env bash"
 output="${output} ${NEWLINE}"
@@ -35,7 +35,11 @@ do
 	#line=$(echo $line | sed "s/\/tmp/$root\/tmp/g")
 	line=$(echo $line | sed 's/\<mkfifo\>/touch/g')
 	line=$(echo $line | sed 's/</< /g')
-	line=$(echo $line | sed 's/>/> /g')
+	line=$(echo $line | sed 's/>"/> /g')
+	line=$(echo $line | sed 's/"\//\//g')
+	line=$(echo $line | sed 's/" ;/ ;/g')
+	line=$(echo $line | sed 's/#fifo/fifo/g')
+	line=$(echo $line | sed 's/" &/ &/g')
 
 	if echo "$line" | grep -q "<"
 	then
@@ -81,13 +85,13 @@ do
 	RANDOM=$(date +%s%N)
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
-	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine '/g")
+	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \"/g")
 	echo $line
         #echo $line | sed -r "s/&/' &/g"	
 
 done < tempPASH2.txt > outfile
 
-sed -i "s/&/' &/g" outfile
+sed -i "s/&/\" &/g" outfile
 
 cat tempPASH0.txt > pipessshellfs.sh
 cat tempPASH1.txt >> pipessshellfs.sh
