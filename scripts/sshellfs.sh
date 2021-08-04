@@ -27,16 +27,180 @@ output="#!/usr/bin/env bash"
 output="${output} ${NEWLINE}"
 output="${output} ${NEWLINE}"
 
-skippattern="/pash/runtime/eager.sh"
+eagerpattern="/pash/runtime/eager.sh"
 
+fifoSplitArray=()
+fifoLineSplitArray=()
+fifoSplitToReplaceArray=()
+fifoLineSplitToReplaceArray=()
+fifoLastArray=()
+fifoLineLastArray=()
+fifoLastToReplaceArray=()
+fifoLineLastToReplaceArray=()
+fifoSplitArrayLen=0
 itersplitstr=0
+sizeSplit=0
+iterline=0
+iterlineSplit=0
+iterlineSource=0
+iterlineLast=0
 
 while read line
 do
-
-	if echo "$line" | grep -q "$skippattern"
+	iterline=$(($iterline+1))
+	if echo "$line" | grep -q "split"
 	then
-		continue
+	        IFS=', ' read -r -a arrayline <<< "$line"
+		iterlineSplit=$iterline
+
+                for index in "${!arrayline[@]}"
+		do
+			if echo "${arrayline[$index]}" | grep -q "fifo"
+			then
+				fifoSplitArray+=(${arrayline[$index]})
+				continue
+				itersplitstr=$index
+				#echo Iter auto split location: $index			
+			fi
+		done
+
+		#fifoSplitArrayLen=${!fifoSplitArray[@]}
+		#sizeSplit=$(($fifoSplitArrayLen-1))
+	fi
+
+done < $input
+
+# Remove first element
+unset fifoSplitArray[0]
+echo print fifo split array: ${fifoSplitArray[*]}
+
+sizeSplit=${!fifoSplitArray[@]}
+
+iterline=0
+while read line
+do
+	iterline=$(($iterline+1))
+	
+        if [ $iterline -ge $iterlineSplit + 1 ] && [ $iterline -le $iterlineSplit + $sizeSplit ]
+	then
+	        IFS=', ' read -r -a arrayline <<< "$line"
+		iterlineSplit=$iterline
+		fifoLineSplitArrayToReplace+=$iterline
+
+                for index in "${!arrayline[@]}"
+		do
+			if echo "${arrayline[$index]}" | grep -q "fifo"
+			then
+				fifoSplitArrayToReplace+=(${arrayline[$index]})	
+				break
+			fi	
+		done
+	fi
+
+done < $input
+
+iterline=0
+while read line
+do
+
+	iterline=$(($iterline+1))
+
+	if echo "$line" | grep -q "source"
+	then
+		iterlineSource=$iterline	
+	fi	
+
+done < $input
+
+iterline=0
+while read line
+do
+	iterline=$(($iterline+1))
+	
+	if $iterline -eq $iterlineSource-1
+	then
+		iterlineLast=$iterline
+	        IFS=', ' read -r -a arrayline <<< "$line"
+
+                for index in "${!arrayline[@]}"
+		do
+			if echo "${arrayline[$index]}" | grep -q "fifo"
+			then
+				fifoLastArray+=${arrayline[$index]}
+			fi
+
+		done
+	fi
+
+done < $input
+
+iterline=0
+while read line
+do
+	iterline=$(($iterline+1))
+	fifoLastArrayToReplaceTmp=""
+
+        if [ $iterline -le $iterlineLast - 1 ] && [ $iterline -ge $iterlineLast - $sizeSplit ]
+	then
+		IFS=', ' read -r -a arrayline <<< "$line"
+		iterlineLast=$iterline
+		fifoLineLastArrayToReplace+=$iterline
+
+                for index in "${!arrayline[@]}"
+		do
+			if echo "${arrayline[$index]}" | grep -q "fifo"
+			then
+				fifoLastArrayToReplaceTmp=${arrayline[$index]}
+				fifoLastArrayToReplace+=(${arrayline[$index]})	
+			fi	
+		done
+		fifoLastArrayToReplace+=$fifoLastArrayToReplaceTmp	
+	fi
+
+done < $input
+
+for index in "${!fifoSplitArray[@]}"
+do
+	fifoSplitArray[$index]=$(echo $fifoSplitArray[$index] | sed 's/"//g')	
+	fifoSplitArray[$index]=$(echo $fifoSplitArray[$index] | sed 's/#fifo/fifo/g')	
+done
+
+for index in "${!fifoLastArray[@]}"
+do
+	fifoLastArray[$index]=$(echo $fifoLastArray[$index] | sed 's/"//g')	
+	fifoLastArray[$index]=$(echo $fifoLastArray[$index] | sed 's/#fifo/fifo/g')	
+done
+
+echo Print fifoSplitArray ...
+for index in "${!fifoSplitArray[@]}"
+do
+	echo $fifoSplitArray[$index]
+done
+
+echo Print fifoLastArray ...
+for index in "${!fifoLastArray[@]}"
+do
+	echo $fifoLastArray[$index]
+done
+
+while read line
+do
+	echo $line
+
+done < $input > output1
+
+while read line
+do
+	iterline=$(($iterline+1))
+
+	if echo "$line" | grep -q "$eagerpattern"
+	then
+		echo eager pattern detected	
+	        IFS=', ' read -r -a arrayline <<< "$line"
+		echo ${arrayline[1]}
+		echo ${arrayline[2]}
+		echo ${arrayline[3]}
+                output="${output} { cp ${arrayline[2]} ${arrayline[3]} & }" 
 	fi
 
 	#line=$(echo $line | sed "s/\/tmp/$root\/tmp/g")
@@ -66,24 +230,9 @@ do
 			file2=$(echo $file2 | sed 's/& }//g')
 			echo file1: $file1
 			echo file2: $file2
-
+		
 		fi
 		output="${output} { ${recvcmd1} ${file1} ${recvcmd2} | ${cmd} | ${sendcmd} > ${file2} & }"		
-
-	elif echo "$line" | grep -q "split"
-	then
-	        IFS=', ' read -r -a arrayline <<< "$line"
-
-                #for index in "${!arrayline[@]}"
-		#do
-			#if echo "${arrayline[$index]}" | grep -q "split"
-			#then
-				#itersplitstr=$index
-				#echo Iter auto split location: $index			
-			#fi
-
-		#done
-		output="${output} ${line}"
 	else
 		output="${output} ${line}"
 	fi
