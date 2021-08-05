@@ -33,16 +33,6 @@ while read line
 do
 	iterline=$(($iterline+1))
 
-	if echo "$line" | grep -q "$eagerpattern"
-	then
-		echo eager pattern detected	
-	        IFS=', ' read -r -a arrayline <<< "$line"
-		echo ${arrayline[1]}
-		echo ${arrayline[2]}
-		echo ${arrayline[3]}
-                output="${output} { cp ${arrayline[2]} ${arrayline[3]} & }" 
-	fi
-
 	#line=$(echo $line | sed "s/\/tmp/$root\/tmp/g")
 	line=$(echo $line | sed 's/\<mkfifo\>/touch/g')
 	line=$(echo $line | sed 's/</< /g')
@@ -73,6 +63,15 @@ do
 		
 		fi
 		output="${output} { ${recvcmd1} ${file1} ${recvcmd2} | ${cmd} | ${sendcmd} > ${file2} & }"		
+	
+	elif echo "$line" | grep -q "$eagerpattern"
+	then
+		echo eager pattern detected	
+	        IFS=', ' read -r -a arrayline <<< "$line"
+		echo ${arrayline[1]}
+		echo ${arrayline[2]}
+		echo ${arrayline[3]}
+                output="${output} { cp ${arrayline[2]} ${arrayline[3]} & }" 
 	else
 		output="${output} ${line}"
 	fi
@@ -113,8 +112,8 @@ do
 
 done < tempPASH2.txt > outfile
 
-sed -i "s/\" & }/\"/g" outfile
-sed -i "s/& }/\"/g" outfile
+#sed -i "s/\" & }/\"/g" outfile
+#sed -i "s/& }/\"/g" outfile
 #sed -i "s/\$\$/\$1\$1/g" outfile
 
 cat tempPASH0.txt > pipessshellfs.sh
