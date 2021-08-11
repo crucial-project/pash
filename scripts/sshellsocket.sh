@@ -166,7 +166,7 @@ do
 	recvcmd1="nc -N -l ${PORT}"
 	recvcmd2="rdv ${mailbox} -1 \$IP"
 
-	sendcmd1="HOST=\$(rdv ${mailbox}); exec 3<>/dev/tcp/\$(HOST)/\$(PORT);"
+	sendcmd1="HOST=\\\\\$(rdv ${mailbox}); exec 3<>/dev/tcp/\\\\\$(HOST)/${PORT};"
 	sendcmd2="echo EOF >&3"
 
 	if echo "$line" | grep -q "$pattern2" && echo "$line" | grep -q "$pattern3" 
@@ -203,6 +203,7 @@ do
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
 	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \"/g")
+	line=$(echo "$line" | sed -r "s/& }/\" &/g")
 	echo $line
 
 done < tempPASH2.txt > outfile
