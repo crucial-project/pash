@@ -74,8 +74,6 @@ funcrdv="${funcrdv} ${NEWTRAIL} fi"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} }"
 funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWLINE}"
 
 output="#!/usr/bin/env bash"
 output="${output} ${NEWLINE}"
@@ -83,6 +81,8 @@ output="${output} ${NEWLINE}"
 output="${output} ${funcrdv}"
 output="${output} ${NEWLINE}"
 output="${output} ${NEWLINE}"
+
+echo -e $output > ${root}/sshellsocket1.tmp
 
 while read line
 do
@@ -136,7 +136,7 @@ do
 		fi
     	done
 
-done < $input > ${root}/sshellsocket.tmp 
+done < $input > ${root}/sshellsocket2.tmp 
 
 echo keyCmds file:
 cat keyCmds.out
@@ -177,33 +177,43 @@ do
 	        IFS=$pattern2 read -r -a arrayline1 <<< "$line"
 
 		cmd1=${arrayline1[0]}
-		echo cmd1 : $cmd1
-		echo arrayline1 : ${arrayline1[1]}
+		#echo cmd1 : $cmd1
+		#echo arrayline1 : ${arrayline1[1]}
 	        IFS=$pattern3 read -r -a arrayline2 <<< "${arrayline1[1]}"
 
 		cmd2="cat ${arrayline2[0]}"
-		echo cmd2 : $cmd2
+		#echo cmd2 : $cmd2
 
-		output="${output} ${recvcmd1} | ${cmd1}& ${recvcmd2}"
-		output="${output} ${NEWLINE}"
-		output="${output} ${sendcmd1} ${cmd2} >&3; ${sendcmd2}"
-		output="${output} ${NEWLINE}"
+		echo "{ ${recvcmd1} | ${cmd1}& ${recvcmd2} & }"
+		echo "{ ${sendcmd1} ${cmd2} >&3; ${sendcmd2} & }"
 	else
 
-		output="${output} ${line}"
-		output="${output} ${NEWLINE}"
+		echo "${line}"
 	fi
 
-done < ${root}/sshellsocket.tmp
+done < ${root}/sshellsocket2.tmp > ${root}/sshellsocket3.tmp
 
 echo THIRD STEP
 
-#while read line
-#do
-#	echo $line
+csplit -z -f 'tempPASH' -b '%0d.txt' ${root}/sshellsocket3.tmp /mkfifo_pash_fifos/ {*}
 
-#done < ${root}/sshellsocket.tmp
+while read line
+do
+	RANDOM=$(date +%s%N)
+	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
+
+	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \"/g")
+	echo $line
+
+done < tempPASH2.txt > outfile
+
+#touch pipesshellsocket.sh
+cat ${root}/sshellsocket1.tmp > sshellbackendsocket.sh
+#echo "" >> pipesshellsocket.sh
+cat tempPASH0.txt >> sshellbackendsocket.sh
+cat tempPASH1.txt >> ssshellbackendsocket.sh
+cat outfile >> sshellbackendsocket.sh
 
 echo OUTPUT
 echo ==================
-echo -e $output 
+#echo -e $output 

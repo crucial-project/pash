@@ -16,12 +16,13 @@ while IFS= read -r line; do
 done < configssh.txt
 
 #root="/netfs/inf/amaheo/tmp"
-root="netfs\/inf\/amaheo\/tmp"
+#root="netfs\/inf\/amaheo\/tmp"
+root="home\/aurele\/tmp"
 NEWLINE='\n'
 
 sendcmd="awk '{print \$0}END{print \"EOF\"}'"
 recvcmd1="tail -n +0 --pid=\$\$ --retry"
-recvcmd2="2>/dev/null | { sed '/EOF/ q' && kill \\$\\$ ;} | grep -v ^EOF\\$"
+recvcmd2="2>/dev/null | { sed '/EOF/ q' && kill \$\$ ;} | grep -v ^EOF\$"
 
 output="#!/usr/bin/env bash"
 output="${output} ${NEWLINE}"
@@ -97,8 +98,9 @@ do
 	RANDOM=$(date +%s%N)
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
-	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \"/g")
+	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt $sshmachine \"/g")
 	line=$(echo "$line" | sed -r "s/\\$\\$/\\\\$\\\\$/g")
+	line=$(echo "$line" | sed -r "s/EOF\\$/EOF\\\\$/g")
 	line=$(echo "$line" | sed -r "s/\\\$0/\\\\\$0/g")
 	line=$(echo "$line" | sed -r "s/\"EOF\"/\\\\\"EOF\\\\\"/g")
         #echo $line | sed -r "s/&/' &/g"	

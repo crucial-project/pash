@@ -5,10 +5,11 @@ input=($@)
 PORT=8080
 IP=127.0.0.1
 pipe=$(uuid)
-HOST=$(rdv ${pipe})
+#HOST=$(rdv ${pipe})
+
+NEWLINE='\n'
 
 rdvcmd="rdv() {echo $3 > /tmp/$1/$PID}"
-
 sendcmd1="nc -N -l ${PORT}"
 sendcmd2="rdv"
 sendcmd3="-1 ${IP}"
@@ -30,7 +31,54 @@ touch keyCmds.out
 output="#!/usr/bin/env bash"
 NEWLINE='\n'
 output="${output} ${NEWLINE}"
-output+"${output} ${rdvcmd}"
+
+funcrdv=""
+funcrdv="${funcrdv} rdv()"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} {"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} file=\$1"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} IP=\$3"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} if $# -eq 1"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} then"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} echo reader"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} IP=\$(cat \$1)"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} return \$IP"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} elif \$# -eq 3"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} then"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} echo writer"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} echo \$3 > \$1"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} return 0"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} else"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} echo \"Usage: rdv <file> or rdv <file> -1 <IP>\"":
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} fi"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} }"
+funcrdv="${funcrdv} ${NEWLINE}"
+
+output="${output} ${funcrdv}"
+
+#output="${output} ${rdvcmd}"
+
+if [ $# -eq 0 ]
+  then
+    echo "No arguments supplied: abort"
+    exit
+fi
 
 while read line
 do
@@ -45,6 +93,8 @@ do
     line=$(echo $line | sed 's/;//g')
     line=$(echo $line | sed 's/</< /g')
     line=$(echo $line | sed 's/>/> /g')
+
+    IFS=', ' read -r -a arrayline <<< "$line"
 
     # Collect and store commands from the input script
     for index in "${!arrayline[@]}"
@@ -140,5 +190,6 @@ done
 
 echo OUTPUT
 echo ==================
-echo -e $output > pipessshellsockets.sh 
+#echo -e $output > pipessshellsockets.sh 
+echo -e $output 
 
