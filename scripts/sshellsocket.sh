@@ -211,7 +211,7 @@ done < tempPASH2.txt > outfile
 cat ${root}/sshellsocket1.tmp > sshellbackendsocket.sh
 #echo "" >> pipesshellsocket.sh
 cat tempPASH0.txt >> sshellbackendsocket.sh
-cat tempPASH1.txt >> ssshellbackendsocket.sh
+cat tempPASH1.txt >> sshellbackendsocket.sh
 cat outfile >> sshellbackendsocket.sh
 
 echo OUTPUT
