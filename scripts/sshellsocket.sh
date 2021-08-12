@@ -91,10 +91,11 @@ do
 	line=$(echo $line | sed 's/\<mkfifo\>/touch/g')
 	line=$(echo $line | sed 's/#fifo/fifo/g')
 	line=$(echo $line | sed 's/"\/tmp/ \/tmp/g')
-	line=$(echo $line | sed 's/fifo\[0-9]"/fifo\[0-9]/g')
+	#line=$(echo $line | sed 's/fifo\[0-9]"/fifo\[0-9]/g')
 	#line=$(echo $line | sed 's/" ;/ ;/g')
 	#line=$(echo $line | sed 's/" >/ >/g')
-	line=$(echo $line | sed 's/"//g')
+	#line=$(echo $line | sed 's/"//g')
+	line=$(echo $line | sed 's/\("\s"\)\|"/\1/g')
 	#line=$(echo $line | sed 's/" &/  &/g')
 
 	if echo "$line" | grep -q "$patterneager"
