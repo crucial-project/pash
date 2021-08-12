@@ -7,7 +7,7 @@ IP=127.0.0.1
 getIP="\\\\\$(hostname -I | awk '{ print \\\\\$1 }')"
 #mailbox=$(uuid)
 
-root="/home/aurele/tmp"
+root="/netfs/inf/amaheo"
 #HOST=$(rdv ${pipe})
 
 if [ $# -eq 0 ]
@@ -43,11 +43,13 @@ funcrdv="${funcrdv} rdv()"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} {"
 funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} ${NEWTRAIL} echo RDV CALL"
+funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL} file=\$1"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL} IP=\$3"
 funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWTRAIL} if $# -eq 1"
+funcrdv="${funcrdv} ${NEWTRAIL} if \$# -eq 1"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL}  then"
 funcrdv="${funcrdv} ${NEWLINE}"
@@ -91,6 +93,7 @@ do
 	line=$(echo $line | sed 's/\<mkfifo\>/touch/g')
 	line=$(echo $line | sed 's/#fifo/fifo/g')
 	line=$(echo $line | sed 's/"\/tmp/ \/tmp/g')
+	line=$(echo $line | sed "s|/tmp|${root}/tmp|g")
 	#line=$(echo $line | sed 's/fifo\[0-9]"/fifo\[0-9]/g')
 	#line=$(echo $line | sed 's/" ;/ ;/g')
 	#line=$(echo $line | sed 's/" >/ >/g')
@@ -166,7 +169,8 @@ echo SECOND STEP
 while read line
 do
 
-	mailbox=$(uuid)
+	#mailbox=$(uuid)
+	mailbox=${root}/tmp/$(date +%s%N)
 	recvcmd1="IP=${getIP}; nc -N -l ${PORT}"
 	recvcmd2="rdv ${mailbox} -1 \\\\\$IP"
 
@@ -177,10 +181,12 @@ do
 	then
 		line=$(echo $line | sed 's/{//g')
 		line=$(echo $line | sed 's/}//g')
+		line=$(echo $line | sed 's/&//g')
 
 	        IFS=$pattern2 read -r -a arrayline1 <<< "$line"
 
 		cmd1=${arrayline1[0]}
+		cmd1=$(echo $cmd1 | sed 's/" "/\\\\\" \\\\\"/g')
 		#echo cmd1 : $cmd1
 		#echo arrayline1 : ${arrayline1[1]}
 	        IFS=$pattern3 read -r -a arrayline2 <<< "${arrayline1[1]}"
@@ -188,7 +194,7 @@ do
 		cmd2="cat ${arrayline2[0]}"
 		#echo cmd2 : $cmd2
 
-		echo "{ ${recvcmd1} | ${cmd1}& ${recvcmd2} & }"
+		echo "{ ${recvcmd1} | ${cmd1}& ${recvcmd2} > ${arrayline2[1]} & }"
 		echo "{ ${sendcmd1} ${cmd2} >&3; ${sendcmd2} & }"
 	else
 
@@ -206,7 +212,7 @@ do
 	RANDOM=$(date +%s%N)
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
-	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \"/g")
+	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \" \$(declare -f rdv);/g")
 	line=$(echo "$line" | sed -r "s/& }/\" &/g")
 	echo $line
 

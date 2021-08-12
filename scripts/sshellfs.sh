@@ -16,8 +16,8 @@ while IFS= read -r line; do
 done < configssh.txt
 
 #root="/netfs/inf/amaheo/tmp"
-#root="netfs\/inf\/amaheo\/tmp"
-root="home\/aurele\/tmp"
+root="netfs\/inf\/amaheo\/tmp"
+#root="home\/aurele\/tmp"
 NEWLINE='\n'
 
 sendcmd="awk '{print \$0}END{print \"EOF\"}'"
@@ -98,7 +98,7 @@ do
 	RANDOM=$(date +%s%N)
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
-	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt $sshmachine \"/g")
+	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \"/g")
 	line=$(echo "$line" | sed -r "s/\\$\\$/\\\\$\\\\$/g")
 	line=$(echo "$line" | sed -r "s/EOF\\$/EOF\\\\$/g")
 	line=$(echo "$line" | sed -r "s/\\\$0/\\\\\$0/g")
@@ -118,7 +118,7 @@ done < tempPASH2.txt > outfile
 #sed -i "s/& }/\"/g" outfile
 #sed -i "s/\$\$/\$1\$1/g" outfile
 
-cat tempPASH0.txt > pipessshellfs.sh
-cat tempPASH1.txt >> pipessshellfs.sh
-cat outfile >> pipessshellfs.sh
+cat tempPASH0.txt > sshellbackendfs.sh
+cat tempPASH1.txt >> sshellbackendfs.sh
+cat outfile >> sshellbackendfs.sh
 
