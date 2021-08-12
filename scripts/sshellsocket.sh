@@ -4,6 +4,7 @@ input=($@)
 
 PORT=8080
 IP=127.0.0.1
+getIP="\\\\\$(hostname -I | awk '{ print \\\\\$1 }')"
 #mailbox=$(uuid)
 
 root="/home/aurele/tmp"
@@ -90,8 +91,10 @@ do
 	line=$(echo $line | sed 's/\<mkfifo\>/touch/g')
 	line=$(echo $line | sed 's/#fifo/fifo/g')
 	line=$(echo $line | sed 's/"\/tmp/ \/tmp/g')
-	line=$(echo $line | sed 's/" ;/ ;/g')
-	line=$(echo $line | sed 's/" >/ >/g')
+	line=$(echo $line | sed 's/fifo\[0-9]"/fifo\[0-9]/g')
+	#line=$(echo $line | sed 's/" ;/ ;/g')
+	#line=$(echo $line | sed 's/" >/ >/g')
+	line=$(echo $line | sed 's/"//g')
 	#line=$(echo $line | sed 's/" &/  &/g')
 
 	if echo "$line" | grep -q "$patterneager"
@@ -163,8 +166,8 @@ while read line
 do
 
 	mailbox=$(uuid)
-	recvcmd1="nc -N -l ${PORT}"
-	recvcmd2="rdv ${mailbox} -1 \$IP"
+	recvcmd1="IP=${getIP}; nc -N -l ${PORT}"
+	recvcmd2="rdv ${mailbox} -1 \\\\\$IP"
 
 	sendcmd1="HOST=\\\\\$(rdv ${mailbox}); exec 3<>/dev/tcp/\\\\\$(HOST)/${PORT};"
 	sendcmd2="echo EOF >&3"
