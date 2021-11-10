@@ -2,7 +2,7 @@
 
 input=($@)
 
-PORT=8080
+PORT=12345
 IP=127.0.0.1
 getIP="\\\\\$(hostname -I | awk '{ print \\\\\$1 }')"
 #mailbox=$(uuid)
@@ -24,6 +24,7 @@ done < configssh.txt
 NEWLINE='\n'
 NEWTRAIL='\t'
 NEWTRAIL1='\t\t'
+NEWTRAIL2='\t\t\t'
 cmd1=""
 cmd2=""
 
@@ -37,33 +38,40 @@ patterneager="/pash/runtime/eager.sh"
 #pattern6="/pash/runtime/auto-split.sh"
 #pattern7="source"
 
+endcmd="awk '{print \\\\\$0}END{print \\\"EOF\\\"}'"
+killcmd="&& kill \\\\\$\\\\\$"
+recvfile1="tail -n +0 -f --pid=\\\\\$\\\\\$ --retry"
+recvfile2="2>/dev/null | { sed /EOF/ q ;} | grep -v ^EOF\\\\\$"
+
 
 funcrdv=""
 funcrdv="${funcrdv} rdv()"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} {"
 funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWTRAIL} echo RDV CALL"
-funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL} file=\$1"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL} IP=\$3"
 funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWTRAIL} if \$# -eq 1"
+funcrdv="${funcrdv} ${NEWTRAIL} if [ \$# -eq 1 ]"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL}  then"
 funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWTRAIL1} echo reader"
+funcrdv="${funcrdv} ${NEWTRAIL1} while [ ! -f \$1 ]"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} ${NEWTRAIL1} do"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} ${NEWTRAIL2} sleep 1"
+funcrdv="${funcrdv} ${NEWLINE}"
+funcrdv="${funcrdv} ${NEWTRAIL1} done"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL1} IP=\$(cat \$1)"
 funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWTRAIL1} return \$IP"
+funcrdv="${funcrdv} ${NEWTRAIL1} echo \$IP"
 funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWTRAIL} elif \$# -eq 3"
+funcrdv="${funcrdv} ${NEWTRAIL} elif [ \$# -eq 3 ]"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL} then"
-funcrdv="${funcrdv} ${NEWLINE}"
-funcrdv="${funcrdv} ${NEWTRAIL1} echo writer"
 funcrdv="${funcrdv} ${NEWLINE}"
 funcrdv="${funcrdv} ${NEWTRAIL1} echo \$3 > \$1"
 funcrdv="${funcrdv} ${NEWLINE}"
@@ -110,7 +118,9 @@ do
 		#echo ${arrayline[2]}
 		#echo ${arrayline[3]}
                 #output="${output} { cp ${arrayline[2]} ${arrayline[3]} & }"
-                echo "{ cp ${arrayline[2]} ${arrayline[3]} & }"
+                #echo "{ rsync --partial ${arrayline[2]} ${arrayline[3]} & }"
+		#output="${output} { ${recvfile1} ${arrayline[2]} ${recvfile2} | ${endcmd} > ${arrayline[3]} ${killcmd} \" & }"
+		echo "{ ${recvfile1} ${arrayline[2]} ${recvfile2} | ${endcmd} > ${arrayline[3]} ${killcmd} \" & }"
 		#output="${output} ${NEWLINE}"
 	else
 		echo $line
@@ -171,11 +181,14 @@ do
 
 	#mailbox=$(uuid)
 	mailbox=${root}/tmp/$(date +%s%N)
-	recvcmd1="IP=${getIP}; nc -N -l ${PORT}"
-	recvcmd2="rdv ${mailbox} -1 \\\\\$IP"
 
-	sendcmd1="HOST=\\\\\$(rdv ${mailbox}); exec 3<>/dev/tcp/\\\\\$(HOST)/${PORT};"
-	sendcmd2="echo EOF >&3"
+	#recvcmd="IP=${getIP}; rdv ${mailbox} -1 \\\\\$IP ; nc -N -l ${PORT}"
+	recvcmd="IP=${getIP}; rdv ${mailbox} -1 \\\\\$IP ; nc \\\\\$IP ${PORT}"
+	#recvcmd2="rdv ${mailbox} -1 \\\\\$IP"
+
+	#sendcmd1="HOST=\\\\\$(rdv ${mailbox}); exec 3<>/dev/tcp/\\\\\${HOST}/${PORT};"
+	#sendcmd2="echo EOF >&3 && kill \\\\\$\\\\\$"
+	sendcmd="HOST=\\\\\$(rdv ${mailbox}); nc -l ${PORT} < source.in"
 
 	if echo "$line" | grep -q "$pattern2" && echo "$line" | grep -q "$pattern3" 
 	then
@@ -191,13 +204,14 @@ do
 		#echo arrayline1 : ${arrayline1[1]}
 	        IFS=$pattern3 read -r -a arrayline2 <<< "${arrayline1[1]}"
 
-		cmd2="cat ${arrayline2[0]}"
+		cmd2="tail -n +0 --retry -f --pid=\\\\\$\\\\\$ ${arrayline2[0]} | { sed \\\\\"/EOF/ q\\\\\" ;} | grep -v ^EOF\\\\\$ > source.in "
 		#echo cmd2 : $cmd2
 
-		echo "{ ${recvcmd1} | ${cmd1}& ${recvcmd2} > ${arrayline2[1]} & }"
-		echo "{ ${sendcmd1} ${cmd2} >&3; ${sendcmd2} & }"
+		echo "{ ${recvcmd} | ${cmd1} > ${arrayline2[1]} & }"
+		#echo "{ ${recvcmd} | ${cmd1}& & }"
+		#echo "{ ${sendcmd} ${cmd2} >&3; ${sendcmd2} & }"
+		echo "{ ${cmd2} ; ${sendcmd} & }"
 	else
-
 		echo "${line}"
 	fi
 
@@ -212,18 +226,20 @@ do
 	RANDOM=$(date +%s%N)
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
-	line=$(echo "$line" | sed -r "s/^[{]/{ ssh -tt amaheo@$sshmachine \" \$(declare -f rdv);/g")
+	line=$(echo "$line" | sed -r "s/^[{]/{ nohup ssh -tt amaheo@$sshmachine \" \$(declare -f rdv);/g")
 	line=$(echo "$line" | sed -r "s/& }/\" &/g")
 	echo $line
 
 done < tempPASH2.txt > outfile
 
+inputfile=$(basename $input)
+
 #touch pipesshellsocket.sh
-cat ${root}/sshellsocket1.tmp > sshellbackendsocket.sh
+cat ${root}/sshellsocket1.tmp > sshellbackendsocket_$inputfile
 #echo "" >> pipesshellsocket.sh
-cat tempPASH0.txt >> sshellbackendsocket.sh
-cat tempPASH1.txt >> sshellbackendsocket.sh
-cat outfile >> sshellbackendsocket.sh
+cat tempPASH0.txt >> sshellbackendsocket_$inputfile
+cat tempPASH1.txt >> sshellbackendsocket_$inputfile
+cat outfile >> sshellbackendsocket_$inputfile
 
 echo OUTPUT
 echo ==================
