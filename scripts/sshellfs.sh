@@ -153,7 +153,7 @@ do
 	sshmachine=${arrssh[$RANDOM % ${#arrssh[@]} ]}
 
 	line=$(echo $line | sed 's/"/\\\"/g')
-	line=$(echo "$line" | sed -r "s/^[{]/{ nohup ssh -ntt amaheo@$sshmachine \"/g")
+	line=$(echo "$line" | sed -r "s/^[{]/{ nohup ssh -ntt amaheo@localhost \"/g")
 	#line=$(echo "$line" | sed -r "s/& }/\" &/g")
 	#line=$(echo "$line" | sed -r "s/\" \"/\\\\\" \\\\\"/g")
 	#line=$(echo "$line" | sed -r "s/\\$\\$/\\\\$\\\\$/g")
@@ -175,7 +175,7 @@ do
 		line=$(echo $line | sed 's/}//g')
 	elif echo "$line" | grep -q "echo EOF"
 	then
-		line="nohup ssh -ntt amaheo@$sshmachine \" ${line}"
+		line="nohup ssh -ntt amaheo@localhost \" ${line}"
 	fi
 	echo $line
 
